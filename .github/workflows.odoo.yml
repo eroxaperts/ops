@@ -3,7 +3,7 @@ name: Odoo CI/CD
 on:
   push:
     branches:
-      - main  # Запускать только при пуше в ветку main
+      - odoo  # Запускать только при пуше в ветку main
 
 jobs:
   test:
