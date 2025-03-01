@@ -1,0 +1,95 @@
+name: Odoo CI/CD
+
+on:
+  push:
+    branches:
+      - main  # Запускать только при пуше в ветку main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: odoo
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libxslt-dev libzip-dev libldap2-dev libsasl2-dev
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test  # Запускать только после успешного завершения тестов
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Приватный SSH-ключ
+          SERVER_IP: ${{ secrets.SERVER_IP }}  # IP сервера
+          SERVER_USER: ${{ secrets.SERVER_USER }}  # Пользователь сервера
+        run: |
+          mkdir -p ~/.ssh
+          echo "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
+          " > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H c82dbe96174b.vps.myjino.ru >> ~/.ssh/known_hosts
+          ssh eroxa@c82dbe96174b.vps.myjino.ru "cd /path/to/your/odoo/project && git pull origin main"
+          ssh eroxa@c82dbe96174b.vps.myjino.ru "sudo systemctl restart odoo"
